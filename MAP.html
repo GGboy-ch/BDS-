@@ -1,0 +1,90 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <style type="text/css">
+        body, html, #allmap, #allmap {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            font-family: "微软雅黑";
+        }
+    </style>
+    <script type="text/javascript" src="https://api.map.baidu.com/api?type=webgl&v=1.0&ak=FffbKvsGisRGsDWj984VRlBaG6qumkWL"></script>
+    <script type="text/javascript" src="https://api.map.baidu.com/library/TrackAnimation/src/TrackAnimation_min.js"></script>
+    <title></title>
+</head>
+<body>
+    <div id="allmap"></div>
+    <div id="r-result">
+        <input type="button" onclick="Change();" value="3D平面" />
+        <input type="button" onclick="Back();" value="2D平面" />
+        <input type="button" onclick="Panel2();" value="隐藏标记" />
+        <input type="button" onclick="Panel();" value="标记" />
+    </div>
+</body>
+</html>
+<script type="text/javascript">
+    // 百度地图API功能
+    var map = new BMapGL.Map("allmap");
+    var point1 = new BMapGL.Point(116.411168, 39.932199);
+    map.centerAndZoom(point1, 15);
+    //开启鼠标滚轮缩放地图大小
+    map.enableScrollWheelZoom(true);
+
+    var marker1 = new BMapGL.Marker(point1);
+    map.addOverlay(marker1);
+
+    //根据c#后端传输的经纬度定位
+    chrome.webview.addEventListener('message', function (event) {
+        var p = event.data;
+        var sp = p.split(",");
+        var lat = parseFloat(sp[0]);
+        var lng = parseFloat(sp[1]);
+        var point = new BMapGL.Point(lat, lng);
+        map.centerAndZoom(point, 15);
+
+
+        //坐标转换完之后的回调函数
+        translateCallback = function (data) {
+            if (data.status === 0) {
+                var marker = new BMapGL.Marker(data.points[0]);
+                map.addOverlay(marker);
+                alert(data.points[0]);
+            }
+        }
+        //使用百度地图自带坐标转化将WSG-84转化为BD-9
+        setTimeout(function () {
+            var convertor = new BMapGL.Convertor();
+            var pointArr = [];
+            pointArr.push(point);
+            convertor.translate(pointArr, 1, 5, translateCallback)
+        }, 1000);
+        
+    });
+    
+
+    function Panel() {
+        /*var point = new BMapGL.Point(118.715431, 30.911475);
+        map.centerAndZoom(point, 15);
+        var marker = new BMapGL.Marker(point);*/
+        map.addOverlays();
+    }
+
+    function Panel2() {
+        map.clearOverlays();
+    }
+
+    function Change(){
+        map.setHeading(64.5);   //设置地图旋转角度
+        map.setTilt(73);       //设置地图的倾斜角度
+    }
+
+    //将3D视图转换回2D
+    function Back() {
+        map.setHeading(0,0);
+        map.setTilt(0,0);
+    }
+
+</script>
